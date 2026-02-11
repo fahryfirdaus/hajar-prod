@@ -1,19 +1,120 @@
-'use client';
+"use client";
 
 import { useDashboardPresenter } from "./dashboardPresenter";
 import { useRouter } from "next/navigation";
-import { Button, addToast } from "@heroui/react";
+import { Button, Skeleton, addToast } from "@heroui/react";
+import { IoMdRefresh } from "react-icons/io";
 import {
-  ArrowsClockwiseIcon,
-  PlayIcon,
-  YoutubeLogoIcon,
-} from "@phosphor-icons/react";
+  FaHome,
+  FaYoutube,
+  FaUsers,
+  FaPlay,
+  FaEye,
+  FaCalendarAlt,
+  FaShieldAlt,
+  FaTrashAlt,
+  FaClock,
+  FaChartBar,
+} from "react-icons/fa";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+
+const CHART_COLORS = {
+  deleted: "#ef4444",
+  pending: "#f59e0b",
+  total: "#3b82f6",
+};
+
+const CustomTooltipPie = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md">
+        <p className="text-sm font-medium text-gray-800">{payload[0].name}</p>
+        <p className="text-sm text-gray-600">
+          {payload[0].value} komentar ({payload[0].payload.percentage}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomTooltipBar = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md">
+        <p className="text-sm font-medium text-gray-800 mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-xs" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 const DashboardContent = () => {
-  const { userInfo, syncChannel, loading } = useDashboardPresenter();
+  const { userInfo, reportData, syncChannel, loading } =
+    useDashboardPresenter();
   const router = useRouter();
+
+  const analytics = useMemo(() => {
+    if (!reportData?.comments) {
+      return { total: 0, deleted: 0, pending: 0, pieData: [], barData: [] };
+    }
+
+    const comments = reportData.comments;
+    const total = comments.length;
+    const deleted = comments.filter((c) => c.status === "deleted").length;
+    const pending = comments.filter((c) => c.status === "pending").length;
+
+    const pieData = [
+      {
+        name: "Dihapus",
+        value: deleted,
+        color: CHART_COLORS.deleted,
+        percentage: total > 0 ? Math.round((deleted / total) * 100) : 0,
+      },
+      {
+        name: "Pending",
+        value: pending,
+        color: CHART_COLORS.pending,
+        percentage: total > 0 ? Math.round((pending / total) * 100) : 0,
+      },
+    ].filter((d) => d.value > 0);
+
+    // Group comments by date for bar chart
+    const dateMap = {};
+    comments.forEach((c) => {
+      const date = new Date(c.createdAt).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
+      if (!dateMap[date]) {
+        dateMap[date] = { date, deleted: 0, pending: 0 };
+      }
+      if (c.status === "deleted") dateMap[date].deleted++;
+      else if (c.status === "pending") dateMap[date].pending++;
+    });
+    const barData = Object.values(dateMap).slice(-7);
+
+    return { total, deleted, pending, pieData, barData };
+  }, [reportData]);
 
   const handleRefresh = async () => {
     try {
@@ -28,7 +129,8 @@ const DashboardContent = () => {
       if (res.success === false) {
         addToast({
           title: "Sinkronisasi Gagal",
-          description: res.message || "Terjadi kesalahan saat menyinkronkan data",
+          description:
+            res.message || "Terjadi kesalahan saat menyinkronkan data",
           color: "danger",
         });
       } else {
@@ -53,21 +155,8 @@ const DashboardContent = () => {
     const channelId = userInfo?.id;
     if (channelId) {
       window.open(`https://www.youtube.com/channel/${channelId}`, "_blank");
-    } else {
-      alert("Channel ID tidak ditemukan");
     }
   };
-
-  if (loading || !userInfo) {
-    return (
-      <div className="h-[calc(100vh-9rem)] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-gray-500 text-lg">Memuat data channel...</p>
-        </div>
-      </div>
-    );
-  }
 
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
@@ -82,76 +171,382 @@ const DashboardContent = () => {
       day: "numeric",
     });
 
-  return (
-    <div className="bg-white h-[calc(100vh-9rem)] rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-      <div className="bg-white h-32 relative">
-        <div className="absolute inset-0 bg-black bg-opacity-20" />
-      </div>
-      <div className="p-8">
-        <div className="flex justify-center -mt-16 relative z-10 mb-6">
-          <div className="relative">
-            <img
-              src={userInfo.thumbnail}
-              alt="Thumbnail Channel"
-              className="w-32 h-32 rounded-full shadow-lg border-4 border-white object-cover bg-white"
-            />
-            <div className="absolute -bottom-2 -right-2 bg-red-600 text-white rounded-full p-2 shadow-lg">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a2.959 2.959 0 0 0-2.084-2.084C19.543 3.75 12 3.75 12 3.75s-7.543 0-9.414.352A2.959 2.959 0 0 0 .502 6.186C.15 8.057.15 12 .15 12s0 3.943.352 5.814a2.959 2.959 0 0 0 2.084 2.084C4.457 20.25 12 20.25 12 20.25s7.543 0 9.414-.352a2.959 2.959 0 0 0 2.084-2.084C23.85 15.943 23.85 12 23.85 12s0-3.943-.352-5.814zM9.75 15.568V8.432L15.818 12l-6.068 3.568z" />
-              </svg>
+  if (loading || !userInfo) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-40 rounded-lg" />
+              <Skeleton className="h-4 w-60 rounded-lg mt-2" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-28 rounded-lg" />
             </div>
           </div>
         </div>
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {userInfo.title}
-            {userInfo.customUrl}
-          </h2>
-          <p className="text-gray-600 text-base mb-3 max-w-2xl mx-auto leading-relaxed">
-            {userInfo.description || "Tidak ada deskripsi tersedia."}
-          </p>
-          <div className="flex items-center justify-center gap-1 text-gray-500 text-sm mb-4">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Bergabung sejak {formatDate(userInfo.publishedAt)}
+
+        {/* Profile Card Skeleton */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
+            <div className="flex-1 space-y-2 w-full">
+              <Skeleton className="h-6 w-48 rounded-lg" />
+              <Skeleton className="h-4 w-32 rounded-lg" />
+              <Skeleton className="h-4 w-full max-w-md rounded-lg" />
+              <Skeleton className="h-3 w-44 rounded-lg" />
+            </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-6">
-            {[
-              ['red', userInfo.subscriberCount, 'Subscriber'],
-              ['blue', userInfo.videoCount || 0, 'Video'],
-              ['green', userInfo.viewCount || 0, 'Total Views'],
-            ].map(([color, count, label]) => (
-              <div key={label} className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg">
-                <div className={`w-3 h-3 bg-${color}-500 rounded-full`} />
-                <span className="text-gray-600 text-sm">
-                  <span className="font-bold text-gray-900">{formatNumber(count)}</span> {label}
-                </span>
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-20 rounded-lg" />
+                  <Skeleton className="h-7 w-16 rounded-lg" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Analytics Section Skeleton */}
+        <div className="mb-6">
+          <Skeleton className="h-6 w-52 rounded-lg mb-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-24 rounded-lg" />
+                    <Skeleton className="h-7 w-12 rounded-lg" />
+                  </div>
+                  <Skeleton className="w-10 h-10 rounded-lg" />
+                </div>
               </div>
             ))}
           </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <Skeleton className="h-4 w-32 rounded-lg mb-4" />
+              <div className="flex justify-center">
+                <Skeleton className="w-44 h-44 rounded-full" />
+              </div>
+              <div className="flex justify-center gap-5 mt-4">
+                <Skeleton className="h-3 w-20 rounded-lg" />
+                <Skeleton className="h-3 w-20 rounded-lg" />
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <Skeleton className="h-4 w-40 rounded-lg mb-4" />
+              <div className="flex items-end gap-3 h-[200px] pt-4">
+                {[60, 80, 45, 90, 70, 55, 85].map((h, i) => (
+                  <div key={i} className="flex-1 flex flex-col justify-end gap-1">
+                    <Skeleton className="w-full rounded-t-md" style={{ height: `${h}%` }} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-center gap-5 mt-4">
+                <Skeleton className="h-3 w-16 rounded-lg" />
+                <Skeleton className="h-3 w-16 rounded-lg" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="px-8 pb-8 pt-4">
-        <div className="flex flex-wrap gap-3 items-center justify-center">
-          <Button onPress={handleViewChannel} className="bg-red-600 hover:bg-red-700 text-white font-semibold">
-            <YoutubeLogoIcon size={20} weight="fill" />
-            Lihat Channel
-          </Button>
-          <Button as={Link} href="/dashboard/video" color="primary" className="bg-blue-600 hover:bg-blue-700 px-6 font-semibold">
-            <PlayIcon weight="fill" />
-            Video
-          </Button>
-          <Button onPress={handleRefresh} color="primary" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
-            <ArrowsClockwiseIcon size={20} />
-            Refresh Data
-          </Button>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FaHome className="text-red-600" />
+              Dashboard
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Informasi channel YouTube kamu
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onPress={handleViewChannel}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+            >
+              <FaYoutube size={14} />
+              Lihat Channel
+            </Button>
+            <Button
+              as={Link}
+              href="/dashboard/video"
+              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+            >
+              <FaPlay size={10} />
+              Kelola Video
+            </Button>
+            <Button
+              onPress={handleRefresh}
+              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+            >
+              <IoMdRefresh size={18} />
+              Sync Data
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Channel Profile Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row items-center gap-5">
+          <div className="relative flex-shrink-0">
+            <img
+              src={userInfo.thumbnail}
+              alt="Thumbnail Channel"
+              className="w-20 h-20 rounded-full border-2 border-gray-200 object-cover bg-white"
+            />
+            <div className="absolute -bottom-1 -right-1 bg-red-600 text-white rounded-full p-1.5 shadow">
+              <FaYoutube size={10} />
+            </div>
+          </div>
+          <div className="text-center sm:text-left flex-1 min-w-0">
+            <h2 className="text-xl font-bold text-gray-800 truncate">
+              {userInfo.title}
+            </h2>
+            {userInfo.customUrl && (
+              <p className="text-sm text-gray-500">{userInfo.customUrl}</p>
+            )}
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+              {userInfo.description || "Tidak ada deskripsi tersedia."}
+            </p>
+            <div className="flex items-center gap-1 text-xs text-gray-400 mt-2 justify-center sm:justify-start">
+              <FaCalendarAlt size={10} />
+              Bergabung sejak {formatDate(userInfo.publishedAt)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Channel Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                Subscriber
+              </p>
+              <p className="text-2xl font-bold text-gray-800 mt-1">
+                {formatNumber(userInfo.subscriberCount)}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+              <FaUsers className="text-red-500" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                Video
+              </p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">
+                {formatNumber(userInfo.videoCount || 0)}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+              <FaPlay className="text-blue-500" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                Total Views
+              </p>
+              <p className="text-2xl font-bold text-green-600 mt-1">
+                {formatNumber(userInfo.viewCount || 0)}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+              <FaEye className="text-green-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Section */}
+      <div className="mb-6">
+        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+          <FaChartBar className="text-red-600" />
+          Analitik Komentar Spam
+        </h2>
+
+        {/* Comment Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  Total Terdeteksi
+                </p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">
+                  {analytics.total}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <FaShieldAlt className="text-blue-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  Sudah Dihapus
+                </p>
+                <p className="text-2xl font-bold text-red-600 mt-1">
+                  {analytics.deleted}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                <FaTrashAlt className="text-red-500" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  Menunggu Aksi
+                </p>
+                <p className="text-2xl font-bold text-amber-600 mt-1">
+                  {analytics.pending}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                <FaClock className="text-amber-500" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Pie Chart - Status Breakdown */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">
+              Status Komentar
+            </h3>
+            {analytics.total > 0 ? (
+              <div className="flex flex-col items-center">
+                <div className="w-full flex justify-center" style={{ height: 220 }}>
+                  <PieChart width={250} height={220}>
+                    <Pie
+                      data={analytics.pieData}
+                      cx={125}
+                      cy={100}
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="none"
+                      isAnimationActive={true}
+                    >
+                      {analytics.pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltipPie />} />
+                  </PieChart>
+                </div>
+                <div className="flex gap-5 mt-2">
+                  {analytics.pieData.map((entry, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      <span className="text-xs text-gray-600">
+                        {entry.name}{" "}
+                        <span className="font-semibold">({entry.value})</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="h-[220px] flex items-center justify-center">
+                <p className="text-gray-400 text-sm">Belum ada data</p>
+              </div>
+            )}
+          </div>
+
+          {/* Bar Chart - Comments by Date */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">
+              Komentar per Tanggal
+            </h3>
+            {analytics.barData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={analytics.barData}
+                  margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    axisLine={{ stroke: "#e5e7eb" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    axisLine={{ stroke: "#e5e7eb" }}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<CustomTooltipBar />} />
+                  <Legend
+                    wrapperStyle={{ fontSize: "12px" }}
+                    iconType="circle"
+                    iconSize={8}
+                  />
+                  <Bar
+                    dataKey="deleted"
+                    name="Dihapus"
+                    fill={CHART_COLORS.deleted}
+                    radius={[4, 4, 0, 0]}
+                    barSize={20}
+                  />
+                  <Bar
+                    dataKey="pending"
+                    name="Pending"
+                    fill={CHART_COLORS.pending}
+                    radius={[4, 4, 0, 0]}
+                    barSize={20}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center">
+                <p className="text-gray-400 text-sm">Belum ada data</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

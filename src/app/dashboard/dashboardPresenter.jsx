@@ -7,6 +7,7 @@ const BASE_API = process.env.NEXT_PUBLIC_BASE_API;
 
 export function useDashboardPresenter() {
   const [userInfo, setUserInfo] = useState(null);
+  const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
 
@@ -18,26 +19,37 @@ export function useDashboardPresenter() {
   useEffect(() => {
     if (!token) return;
 
-    const fetchUserInfo = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await fetch(`${BASE_API}/channels`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        // Fetch channel info and report data in parallel
+        const [channelRes, reportRes] = await Promise.all([
+          fetch(`${BASE_API}/channels`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${BASE_API}/report`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-        if (data.channels?.length > 0) {
-          setUserInfo(data.channels[0]);
+        const channelData = await channelRes.json();
+        if (channelData.channels?.length > 0) {
+          setUserInfo(channelData.channels[0]);
         } else {
           await syncChannel();
         }
+
+        if (reportRes.ok) {
+          const report = await reportRes.json();
+          setReportData(report);
+        }
       } catch (err) {
-        console.error('Gagal fetch channel:', err);
+        console.error('Gagal fetch data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserInfo();
+    fetchAll();
   }, [token]);
 
   const syncChannel = async () => {
@@ -87,6 +99,7 @@ export function useDashboardPresenter() {
 
   return {
     userInfo,
+    reportData,
     loading,
     syncChannel,
     syncVideos,
