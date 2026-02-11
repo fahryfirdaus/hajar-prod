@@ -10,7 +10,7 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { IoMdRefresh } from "react-icons/io";
-import { Button, Image, addToast } from "@heroui/react";
+import { Button, Image, Skeleton, addToast } from "@heroui/react";
 import { formatToWIB } from "@/utilities/dateFormat";
 import { Suspense } from "react";
 import { useCommentPresenter } from "./commentPresenter";
@@ -102,10 +102,69 @@ function CommentPage() {
 
   if (loading || !video) {
     return (
-      <div className="h-[calc(100vh-9rem)] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-          <p className="text-gray-500 text-lg">Memuat data...</p>
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-52 rounded-lg" />
+              <Skeleton className="h-4 w-72 rounded-lg mt-2" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-24 rounded-lg" />
+              <Skeleton className="h-10 w-28 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* Video Info Card Skeleton */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton className="w-full sm:w-56 aspect-video rounded-lg flex-shrink-0" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-5 w-full max-w-xs rounded-lg" />
+              <Skeleton className="h-5 w-3/4 rounded-lg" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-14 rounded-lg" />
+                <Skeleton className="h-4 w-14 rounded-lg" />
+                <Skeleton className="h-4 w-20 rounded-lg" />
+              </div>
+              <Skeleton className="h-3 w-40 rounded-lg" />
+              <Skeleton className="h-10 w-40 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-28 rounded-lg" />
+                  <Skeleton className="h-7 w-12 rounded-lg" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Comment List Skeleton */}
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex items-start gap-3">
+                <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-28 rounded-lg" />
+                  <Skeleton className="h-4 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-2/3 rounded-lg" />
+                </div>
+                <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
