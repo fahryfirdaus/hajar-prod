@@ -7,7 +7,7 @@ import {
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import { FiYoutube } from "react-icons/fi";
-import { FaHome } from "react-icons/fa";
+import { FaHistory, FaHome } from "react-icons/fa";
 import { SlLogout } from "react-icons/sl";
 import Cookies from "js-cookie";
 import { usePathname, useRouter } from "next/navigation";
@@ -81,6 +81,21 @@ const Sidebar = () => {
           startContent={<FiYoutube size={22} />}
         >
           <p className={isCompact ? "hidden" : ""}>Video</p>
+        </Button>
+        <Button
+          as={Link}
+          href="/dashboard/history"
+          isIconOnly={isCompact}
+          className={`${
+            isCompact ? "" : "flex justify-start"
+          } w-full text-gray-800 ${
+            pathname === "/dashboard/history"
+              ? "bg-slate-50"
+              : "bg-slate-50/50"
+          } hover:bg-slate-50 transition-all duration-400`}
+          startContent={<FaHistory size={22} />}
+        >
+          <p className={isCompact ? "hidden" : ""}>History</p>
         </Button>
       </div>
       <div>

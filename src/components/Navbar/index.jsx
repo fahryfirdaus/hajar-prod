@@ -50,7 +50,7 @@ const NavbarComponent = () => {
         <NavbarContent>
           <NavbarBrand className="flex items-center">
             <Link href="#" className="flex gap-2 items-center">
-              <Image alt="Logo" src="/logo/logo.png" width={45} height={50} />
+              <Image alt="Logo" src="/logo/logo.png" className="w-11 h-12 md:w-6 md:h-6" />
               <p className=" hidden sm:block font-bold text-xl text-gray-700">
                 HAJAR
               </p>
@@ -89,13 +89,13 @@ const NavbarComponent = () => {
 
         <NavbarContent justify="end" className="">
           <NavbarItem className="flex">
-            <Button onPress={onOpen} className="bg-red-500 text-white">
+            <Button onPress={onOpen} className="bg-red-500 text-white text-xs md:text-base font-semibold flex item-center">
               <Image
                 alt="Google Logo"
                 src="/icon/google.svg"
-                className="sm:w-6 w-4"
+                className="hidden md:inline w-6"
               />
-              Masuk
+                Masuk
             </Button>
           </NavbarItem>
         </NavbarContent>
