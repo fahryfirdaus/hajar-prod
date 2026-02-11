@@ -2,12 +2,16 @@
 
 import { useSearchParams } from "next/navigation";
 import { AiFillLike } from "react-icons/ai";
-import { FaComment, FaTrashRestore } from "react-icons/fa";
-import { LiaEyeSolid } from "react-icons/lia";
+import {
+  FaComment,
+  FaTrashAlt,
+  FaEye,
+  FaYoutube,
+  FaSearch,
+} from "react-icons/fa";
 import { IoMdRefresh } from "react-icons/io";
 import { Button, Image, addToast } from "@heroui/react";
 import { formatToWIB } from "@/utilities/dateFormat";
-import { PlayIcon } from "@phosphor-icons/react";
 import { Suspense } from "react";
 import { useCommentPresenter } from "./commentPresenter";
 
@@ -49,7 +53,7 @@ function CommentPage() {
     try {
       addToast({
         title: "Memuat...",
-        description: "Sedang menghapus semua komentar judi online",
+        description: "Sedang menghapus komentar",
         color: "primary",
       });
       await deleteComment(commentId);
@@ -71,16 +75,16 @@ function CommentPage() {
     if (videoId) {
       const url = `https://www.youtube.com/watch?v=${videoId}`;
       window.open(url, "_blank");
-      addToast({
-        title: "Video Dibuka",
-        description: "Video sedang dibuka di tab baru",
-        color: "primary",
-      });
     }
   };
 
   const handleHajarAction = async () => {
     try {
+      addToast({
+        title: "Memuat...",
+        description: "Sedang menghapus semua komentar judi online",
+        color: "primary",
+      });
       await deleteAllComments();
       addToast({
         title: "Berhasil",
@@ -100,7 +104,7 @@ function CommentPage() {
     return (
       <div className="h-[calc(100vh-9rem)] flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
           <p className="text-gray-500 text-lg">Memuat data...</p>
         </div>
       </div>
@@ -108,124 +112,164 @@ function CommentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
-      <div className="w-full lg:w-1/2 bg-white p-4 lg:p-6 ">
-        <div className="max-w-full lg:max-w-md">
-          <div className="group mb-4">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FaComment className="text-red-600" />
+              Komentar Judi Online
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Deteksi dan hapus komentar spam pada video
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onPress={handleRefresh}
+              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+            >
+              <FaSearch size={14} />
+              Deteksi
+            </Button>
+            <Button
+              onPress={handleHajarAction}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+            >
+              <FaTrashAlt size={12} />
+              Hapus Semua
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Info Card */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-shrink-0">
             <Image
               src={video.thumbnail}
               alt={video.title}
-              width={600}
-              height={260}
-              className="object-cover"
+              className="w-full sm:w-56 h-auto object-cover aspect-video rounded-lg"
             />
           </div>
-
-          <h2 className="text-lg lg:text-xl font-bold mb-3 text-gray-800 line-clamp-2">
-            {video.title}
-          </h2>
-
-          <div className="flex flex-wrap items-center gap-3 lg:gap-4 text-xs lg:text-sm text-gray-600 mb-4">
-            <div className="flex items-center gap-1">
-              <AiFillLike />
-              <span>{video.likeCount}</span>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-gray-800 line-clamp-2 mb-2">
+              {video.title}
+            </h2>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
+              <div className="flex items-center gap-1.5">
+                <AiFillLike size={14} />
+                <span>{video.likeCount}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <FaComment size={12} />
+                <span>{video.commentCount}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <FaEye size={14} />
+                <span>{video.viewCount?.toLocaleString("id-ID")}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <FaComment />
-              <span>{video.commentCount}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <LiaEyeSolid />
-              <span>{video.viewCount.toLocaleString("id-ID")}</span>
-            </div>
+            <p className="text-xs text-gray-400 mb-3">
+              {formatToWIB(video.publishedAt)}
+            </p>
+            <Button
+              onPress={handleWatchVideo}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm"
+            >
+              <FaYoutube size={14} />
+              Tonton di YouTube
+            </Button>
           </div>
-
-          <p className="text-xs lg:text-sm text-gray-500 mb-4">
-            {formatToWIB(video.publishedAt)}
-          </p>
-
-          <Button
-            onPress={handleWatchVideo}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 text-sm lg:text-base"
-          >
-            <PlayIcon size={18} weight="bold" />
-            Tonton di YouTube
-          </Button>
         </div>
       </div>
-      <div className="w-full lg:w-1/2 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col">
-        <div className="bg-white border-b border-gray-200 p-3 lg:p-4 flex-shrink-0">
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h1 className="text-base lg:text-lg font-semibold text-gray-800">
-              Komentar Judi Online
-            </h1>
-            <div className="flex gap-1 lg:gap-2">
-              <Button
-                onPress={handleRefresh}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm flex items-center gap-1 lg:gap-2"
-              >
-                <IoMdRefresh
-                  size={14}
-                  className="hidden sm:block sm:w-4 sm:h-4 "
-                />
-                <span className="text-xs sm:text-sm">Deteksi</span>
-              </Button>
-              <Button
-                className="bg-red-500 hover:bg-red-600 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm"
-                onPress={handleHajarAction}
-              >
-                <span className="text-xs sm:text-sm">Hapus Semua</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {comments.length > 0 ? (
-            <div className="p-2 lg:p-4 space-y-2">
-              {comments.map((comment, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 lg:p-4 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-start gap-2 lg:gap-3">
-                    {comment.authorProfileImageURL && (
-                      <img
-                        src={comment.authorProfileImageURL}
-                        alt={comment.author}
-                        className="w-8 h-8 lg:w-10 lg:h-10 rounded-full flex-shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-800 text-xs lg:text-sm truncate">
-                          {comment.author}
-                        </h3>
-                      </div>
-                      <p className="text-gray-700 text-xs lg:text-sm leading-relaxed break-words">
-                        {comment.text}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteCommentById(comment.commentId)}
-                      className="p-1 lg:p-2 hover:bg-red-100 rounded-full transition-colors flex-shrink-0"
-                      title="Hapus komentar"
-                    >
-                      <FaTrashRestore className="text-red-500 hover:text-red-700 transition-colors w-3 h-3 lg:w-4 lg:h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center py-8 lg:py-16">
-              <FaComment className="text-gray-300 text-4xl lg:text-6xl mb-4" />
-              <p className="text-gray-500 text-sm lg:text-lg">
-                Tidak ada komentar ditemukan.
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                Komentar Terdeteksi
+              </p>
+              <p className="text-2xl font-bold text-gray-800 mt-1">
+                {comments.length}
               </p>
             </div>
-          )}
+            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+              <FaComment className="text-red-500" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                Video ID
+              </p>
+              <p className="text-sm font-mono font-bold text-gray-800 mt-1 truncate">
+                {videoId}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+              <FaYoutube className="text-blue-500" />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Comments List */}
+      {comments.length > 0 ? (
+        <div className="space-y-3">
+          {comments.map((comment, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start gap-3">
+                {comment.authorProfileImageURL && (
+                  <img
+                    src={comment.authorProfileImageURL}
+                    alt={comment.author}
+                    className="w-10 h-10 rounded-full flex-shrink-0 border border-gray-200"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-800 text-sm truncate">
+                      {comment.author}
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed break-words">
+                    {comment.text}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDeleteCommentById(comment.commentId)}
+                  className="p-2 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 group"
+                  title="Hapus komentar"
+                >
+                  <FaTrashAlt className="text-gray-400 group-hover:text-red-500 transition-colors w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 py-16 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <FaComment className="text-gray-300 text-2xl" />
+          </div>
+          <p className="text-gray-500 text-base">
+            Tidak ada komentar ditemukan.
+          </p>
+          <p className="text-gray-400 text-sm mt-1">
+            Klik "Deteksi" untuk mencari komentar spam.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
