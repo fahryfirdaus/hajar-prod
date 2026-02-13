@@ -280,13 +280,6 @@ const DashboardContent = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
-              onPress={handleViewChannel}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
-            >
-              <FaYoutube size={14} />
-              Lihat Channel
-            </Button>
-            <Button
               as={Link}
               href="/dashboard/video"
               className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
@@ -296,7 +289,7 @@ const DashboardContent = () => {
             </Button>
             <Button
               onPress={handleRefresh}
-              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+              className="bg-blue-600 text-white border font-semibold border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
             >
               <IoMdRefresh size={18} />
               Sync Data
@@ -306,7 +299,7 @@ const DashboardContent = () => {
       </div>
 
       {/* Channel Profile Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center">
         <div className="flex flex-col sm:flex-row items-center gap-5">
           <div className="relative flex-shrink-0">
             <img
@@ -314,9 +307,6 @@ const DashboardContent = () => {
               alt="Thumbnail Channel"
               className="w-20 h-20 rounded-full border-2 border-gray-200 object-cover bg-white"
             />
-            <div className="absolute -bottom-1 -right-1 bg-red-600 text-white rounded-full p-1.5 shadow">
-              <FaYoutube size={10} />
-            </div>
           </div>
           <div className="text-center sm:text-left flex-1 min-w-0">
             <h2 className="text-xl font-bold text-gray-800 truncate">
@@ -329,11 +319,18 @@ const DashboardContent = () => {
               {userInfo.description || "Tidak ada deskripsi tersedia."}
             </p>
             <div className="flex items-center gap-1 text-xs text-gray-400 mt-2 justify-center sm:justify-start">
-              <FaCalendarAlt size={10} />
+              <FaCalendarAlt size={10} className="hidden md:block"/>
               Bergabung sejak {formatDate(userInfo.publishedAt)}
             </div>
           </div>
         </div>
+        <div className="pt-5 md:pt-0">
+          <Button onPress={handleViewChannel} className="bg-red-600 text-white font-semibold">
+            <FaYoutube size={14} color="white"/>
+            Lihat Channel
+          </Button>
+        </div>
+
       </div>
 
       {/* Channel Stats Cards */}
