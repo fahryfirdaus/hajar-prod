@@ -138,7 +138,10 @@ function CommentPage() {
         {/* Stats Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-gray-100 p-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
                   <Skeleton className="h-3 w-28 rounded-lg" />
@@ -153,7 +156,10 @@ function CommentPage() {
         {/* Comment List Skeleton */}
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4">
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-gray-100 p-4"
+            >
               <div className="flex items-start gap-3">
                 <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -206,6 +212,7 @@ function CommentPage() {
       {/* Video Info Card */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
+         
           <div className="flex-shrink-0">
             <Image
               src={video.thumbnail}
@@ -234,6 +241,8 @@ function CommentPage() {
             <p className="text-xs text-gray-400 mb-3">
               {formatToWIB(video.publishedAt)}
             </p>
+          </div>
+          <div className="flex justify-center items-center">
             <Button
               onPress={handleWatchVideo}
               className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 text-sm shadow-sm"
