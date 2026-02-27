@@ -20,6 +20,11 @@ const StatusBadge = ({ status }) => {
       icon: <FaClock size={10} />,
       label: "Pending",
     },
+    hidden: {
+      color: "danger",
+      icon: <FaTrashAlt size={10} />,
+      label: "Dihapus",
+    },
     success: {
       color: "success",
       icon: <MdCheckCircle size={12} />,
@@ -28,9 +33,9 @@ const StatusBadge = ({ status }) => {
   };
 
   const cfg = config[status] || {
-    color: "default",
-    icon: null,
-    label: status,
+    color: "warning",
+    icon: <FaClock size={10} />,
+    label: "Pending",
   };
 
   return (
@@ -56,15 +61,19 @@ export default function HistoryPage() {
   const { comments, total, loading, error, refresh } = useHistoryPresenter();
   const [activeFilter, setActiveFilter] = useState("all");
 
+  const isDeleted = (s) => s === "deleted" || s === "hidden";
+
   const filteredComments =
     activeFilter === "all"
       ? comments
-      : comments.filter((c) => c.status === activeFilter);
+      : activeFilter === "deleted"
+        ? comments.filter((c) => isDeleted(c.status))
+        : comments.filter((c) => !isDeleted(c.status));
 
   const stats = {
     total: comments.length,
-    deleted: comments.filter((c) => c.status === "deleted").length,
-    pending: comments.filter((c) => c.status === "pending").length,
+    deleted: comments.filter((c) => isDeleted(c.status)).length,
+    pending: comments.filter((c) => !isDeleted(c.status)).length,
   };
 
   const handleRefresh = async () => {
