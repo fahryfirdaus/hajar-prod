@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlay, FaComment, FaYoutube } from "react-icons/fa";
-import { Image } from "@heroui/react";
 import { formatToWIB } from "@/utilities/dateFormat";
 import VideoSkeleton from "@/components/VideoSkeleton";
 import { useVideoPresenter } from "./videoPresenter";
@@ -44,12 +43,11 @@ function VideoList() {
               onClick={() => handleClick(video.videoId)}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow group"
             >
-              <div className="relative">
-                <Image
+              <div className="relative w-full aspect-video overflow-hidden bg-gray-100">
+                <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="w-full h-auto object-cover aspect-video"
-                  radius="none"
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                   <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
