@@ -74,14 +74,17 @@ const DashboardContent = () => {
   const router = useRouter();
 
   const analytics = useMemo(() => {
-    if (!reportData?.comments) {
+    if (!reportData?.comments || !userInfo?.id) {
       return { total: 0, deleted: 0, pending: 0, pieData: [], barData: [] };
     }
 
-    const comments = reportData.comments;
+    const comments = reportData.comments.filter(
+      (c) => c.channelId === userInfo.id
+    );
     const total = comments.length;
-    const deleted = comments.filter((c) => c.status === "deleted").length;
-    const pending = comments.filter((c) => c.status === "pending").length;
+    const isDeleted = (s) => s === "deleted" || s === "hidden";
+    const deleted = comments.filter((c) => isDeleted(c.status)).length;
+    const pending = comments.filter((c) => !isDeleted(c.status)).length;
 
     const pieData = [
       {
@@ -98,23 +101,28 @@ const DashboardContent = () => {
       },
     ].filter((d) => d.value > 0);
 
-    // Group comments by date for bar chart
     const dateMap = {};
     comments.forEach((c) => {
-      const date = new Date(c.createdAt).toLocaleDateString("id-ID", {
+      const d = new Date(c.createdAt);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("id-ID", {
         day: "numeric",
         month: "short",
+        year: "numeric",
       });
-      if (!dateMap[date]) {
-        dateMap[date] = { date, deleted: 0, pending: 0 };
+      if (!dateMap[key]) {
+        dateMap[key] = { key, date: label, deleted: 0, pending: 0 };
       }
-      if (c.status === "deleted") dateMap[date].deleted++;
-      else if (c.status === "pending") dateMap[date].pending++;
+      if (c.status === "deleted" || c.status === "hidden")
+        dateMap[key].deleted++;
+      else dateMap[key].pending++;
     });
-    const barData = Object.values(dateMap).slice(-7);
+    const barData = Object.values(dateMap)
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .slice(-7);
 
     return { total, deleted, pending, pieData, barData };
-  }, [reportData]);
+  }, [reportData, userInfo]);
 
   const handleRefresh = async () => {
     try {
@@ -284,11 +292,11 @@ const DashboardContent = () => {
               className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
             >
               <FaPlay size={10} />
-              Kelola Video
+              Lihat Video
             </Button>
             <Button
               onPress={handleRefresh}
-              className="bg-blue-600 text-white border font-semibold border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+              className="bg-blue-600 text-white border font-semibold border-gray-200 hover:bg-blue-500 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
             >
               <IoMdRefresh size={18} />
               Sync Data
@@ -329,7 +337,6 @@ const DashboardContent = () => {
             Lihat Channel
           </Button>
         </div>
-
       </div>
 
       {/* Channel Stats Cards */}
@@ -494,17 +501,20 @@ const DashboardContent = () => {
               Komentar per Tanggal
             </h3>
             {analytics.barData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart
                   data={analytics.barData}
-                  margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+                  margin={{ top: 5, right: 10, left: -10, bottom: 40 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    tick={{ fontSize: 10, fill: "#9ca3af" }}
                     axisLine={{ stroke: "#e5e7eb" }}
                     tickLine={false}
+                    angle={-35}
+                    textAnchor="end"
+                    interval={0}
                   />
                   <YAxis
                     tick={{ fontSize: 11, fill: "#9ca3af" }}
