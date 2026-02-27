@@ -193,14 +193,14 @@ function CommentPage() {
           <div className="flex gap-2">
             <Button
               onPress={handleRefresh}
-              className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+              className="bg-blue-600 border border-gray-200 text-white hover:bg-blue-700 font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
             >
               <FaSearch size={14} />
               Deteksi
             </Button>
             <Button
               onPress={handleHajarAction}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm font-semibold"
             >
               <FaTrashAlt size={12} />
               Hapus Semua
@@ -212,7 +212,7 @@ function CommentPage() {
       {/* Video Info Card */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
-         
+
           <div className="flex-shrink-0">
             <Image
               src={video.thumbnail}
@@ -316,10 +316,10 @@ function CommentPage() {
                 </div>
                 <button
                   onClick={() => handleDeleteCommentById(comment.commentId)}
-                  className="p-2 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 group"
+                  className="p-2 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0 group"
                   title="Hapus komentar"
                 >
-                  <FaTrashAlt className="text-gray-400 group-hover:text-red-500 transition-colors w-3.5 h-3.5" />
+                  <FaTrashAlt className="text-red-400 group-hover:text-red-400 transition-colors w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
