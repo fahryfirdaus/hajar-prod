@@ -102,20 +102,43 @@ export function useCommentPresenter(videoId) {
     if (!video) return;
 
     try {
-      const res = await fetch(
-        `${BASE_API}/${video.channelId}/${video.videoId}/comments`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const commentIds = comments
+        .filter((c) => c?.commentId)
+        .map((c) => c.commentId);
+
+      if (commentIds.length === 0) {
+        setComments([]);
+        return;
+      }
+
+      // Endpoint bulk delete tidak mengubah status laporan.
+      // Hapus satu-per-satu memakai endpoint yang sudah terbukti menandai "deleted".
+      const results = await Promise.allSettled(
+        commentIds.map((commentId) =>
+          fetch(`${BASE_API}/${video.channelId}/${video.videoId}/${commentId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        )
       );
 
-      if (!res.ok) throw new Error('Gagal menghapus semua komentar');
+      const failed = results
+        .map((r, idx) => ({ r, idx }))
+        .filter(({ r }) => r.status === 'fulfilled' && !r.value.ok);
+
+      const rejected = results
+        .map((r, idx) => ({ r, idx }))
+        .filter(({ r }) => r.status === 'rejected');
+
+      if (failed.length > 0 || rejected.length > 0) {
+        throw new Error(
+          `Gagal menghapus sebagian komentar (berhasil: ${
+            commentIds.length - failed.length - rejected.length
+          }/${commentIds.length})`
+        );
+      }
 
       setComments([]);
-      console.log('✅ Semua komentar berhasil dihapus');
     } catch (err) {
       console.error('❌ deleteAllComments error:', err.message);
       throw err;
