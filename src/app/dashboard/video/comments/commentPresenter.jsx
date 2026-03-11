@@ -102,12 +102,16 @@ export function useCommentPresenter(videoId) {
     if (!video) return;
 
     try {
-      const commentIds = comments
-        .filter((c) => c?.commentId)
-        .map((c) => c.commentId);
+      const actionable = comments.filter(
+        (c) =>
+          c?.commentId &&
+          c.status !== 'hidden' &&
+          c.status !== 'deleted' &&
+          c.status !== 'success'
+      );
+      const commentIds = actionable.map((c) => c.commentId);
 
       if (commentIds.length === 0) {
-        setComments([]);
         return;
       }
 
@@ -122,9 +126,15 @@ export function useCommentPresenter(videoId) {
         )
       );
 
+      // Beberapa komentar bisa saja sudah terhapus / tidak ada lagi di YouTube.
+      // Anggap 404/410 sebagai sukses (idempotent), agar tidak memunculkan error toast.
       const failed = results
         .map((r, idx) => ({ r, idx }))
-        .filter(({ r }) => r.status === 'fulfilled' && !r.value.ok);
+        .filter(({ r }) => {
+          if (r.status !== 'fulfilled') return false;
+          if (r.value.ok) return false;
+          return ![404, 410].includes(r.value.status);
+        });
 
       const rejected = results
         .map((r, idx) => ({ r, idx }))
@@ -138,7 +148,8 @@ export function useCommentPresenter(videoId) {
         );
       }
 
-      setComments([]);
+      const deletedSet = new Set(commentIds);
+      setComments((prev) => prev.filter((c) => !deletedSet.has(c.commentId)));
     } catch (err) {
       console.error('❌ deleteAllComments error:', err.message);
       throw err;
